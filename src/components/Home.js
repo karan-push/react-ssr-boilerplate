@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { api } from '../api';
 import { useServerData } from '../state/serverDataContext';
+
+import { addPosts, getPosts } from '@karan-push/fetch-package';
 
 const Home = () => {
   const serverTodos = useServerData(data => {
@@ -9,6 +11,20 @@ const Home = () => {
   });
   const [text, setText] = useState('');
   const [todos, setTodos] = useState(serverTodos);
+
+  useEffect(() => {
+    posts();
+  }, []);
+
+  const posts = async () => {
+    const data = await getPosts();
+    setTodos([
+      ...todos,
+      ...data.map(el => {
+        return { text: el.title, id: el.id };
+      })
+    ]);
+  };
 
   return (
     <div>
@@ -22,8 +38,13 @@ const Home = () => {
             text
           };
 
-          api.todos.create(newTodo).then(res => {
+          /* api.todos.create(newTodo).then(res => {
             setTodos([...todos, res]);
+            setText('');
+          }); */
+
+          addPosts(text, text + ' body', 1).then(res => {
+            setTodos([{ id: res.id, text: res.title }, ...todos]);
             setText('');
           });
         }}
@@ -41,7 +62,7 @@ const Home = () => {
 
       <ul>
         {todos.map(todo => (
-          <li key={todo.id}>{todo.text}</li>
+          <li key={`${todo.id} - ${todo.text}`}>{todo.text}</li>
         ))}
       </ul>
     </div>
